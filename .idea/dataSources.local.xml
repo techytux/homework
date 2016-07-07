@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal">
+    <data-source name="MySQL - homework@localhost" uuid="ed4e32fa-6ac0-45fd-9c05-53cf57331d6f">
+      <secret-storage>master_key</secret-storage>
+      <user-name>root</user-name>
+      <schema-pattern>homework.*</schema-pattern>
+      <default-schemas>performance_schema.*</default-schemas>
+    </data-source>
+    <data-source name="PostgreSQL - homework@localhost" uuid="f5dbbdff-d328-41dd-a7ea-6b18bd4552f3">
+      <secret-storage>master_key</secret-storage>
+      <schema-pattern>homework.*</schema-pattern>
+      <default-schemas>homework.*</default-schemas>
+    </data-source>
+  </component>
+</project>
