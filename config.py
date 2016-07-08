@@ -7,7 +7,6 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = ''
-    SQLALCHEMY_DATABASE_URI = 'postgresql://@localhost/homework'
 
 
 class ProductionConfig(Config):
