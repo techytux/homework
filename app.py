@@ -1,50 +1,52 @@
-import config
 from flask import Flask, jsonify
-
+import psycopg2
 
 app = Flask(__name__)
-app.config.from_object(config.DevelopmentConfig)
 
-@app.route("/pax/<segment_id>", methods=['GET'])
-def get_segment_passenger_count(segment_id):
-    import psycopg2
+
+def run_query(query_string):
+    """
+    Runs the query string against the database and returns only one row
+    :param query_string: (String) SQL Query string
+    :return: (Float/Integer) Returns result from query execution, 0 if No result is obtained
+    """
+
     conn = psycopg2.connect(database='homework', host='localhost', user='root', password='root')
-
     cur = conn.cursor()
-    query_string = """SELECT COUNT(1) FROM rides r JOIN route_segments rs ON rs.route_id = r.route_id JOIN tickets t ON t.ride_id = r.ride_id WHERE rs.segment_id = %s;""" % segment_id
     cur.execute(query_string)
+    rs = cur.fetchone()
+    conn.close()
+
+    return rs[0] or 0
 
 
-    rows = cur.fetchall()
-    count = 0
-    for row in rows:
-        print(row)
-        count = row[0]
+@app.route("/pax/<int:segment_id>", methods=['GET'])
+def get_segment_passenger_count(segment_id):
+    query_string = 'SELECT COUNT(1) FROM rides r' \
+                   ' JOIN route_segments rs ON rs.route_id = r.route_id' \
+                   ' JOIN tickets t ON t.ride_id = r.ride_id' \
+                   ' WHERE rs.segment_id = %d;' % segment_id
+    count = run_query(query_string)
+
     results = {
         'segment_id': segment_id, 'pax': count
     }
-    conn.close()
+
     return jsonify(results)
 
 
-@app.route("/revenue/<segment_id>", methods=['GET'])
+@app.route("/revenue/<int:segment_id>", methods=['GET'])
 def get_segment_revenue(segment_id):
-    import psycopg2
-    conn = psycopg2.connect(database='homework', host='localhost', user='root', password='root')
+    query_string = 'SELECT SUM(t.price) FROM rides r' \
+                   ' JOIN route_segments rs ON rs.route_id = r.route_id' \
+                   ' JOIN tickets t ON t.ride_id = r.ride_id' \
+                   ' WHERE rs.segment_id = %d;' % segment_id
+    revenue = run_query(query_string)
 
-    cur = conn.cursor()
-    query_string = """SELECT SUM(t.price) FROM rides r JOIN route_segments rs ON rs.route_id = r.route_id JOIN tickets t ON t.ride_id = r.ride_id WHERE rs.segment_id = %s;""" % segment_id
-    cur.execute(query_string)
-
-    rows = cur.fetchall()
-    revenue = 0
-    for row in rows:
-        print(row)
-        revenue = row[0]
     results = {
         'segment_id': segment_id, 'revenue': float(revenue)
     }
-    conn.close()
+
     return jsonify(results)
 
 
