@@ -37,14 +37,28 @@ def get_segment_passenger_count(segment_id):
 
 @app.route("/revenue/<int:segment_id>", methods=['GET'])
 def get_segment_revenue(segment_id):
-    query_string = 'SELECT SUM(t.price) FROM rides r' \
-                   ' JOIN route_segments rs ON rs.route_id = r.route_id' \
-                   ' JOIN tickets t ON t.ride_id = r.ride_id' \
-                   ' WHERE rs.segment_id = %d;' % segment_id
+    query_string = """WITH t_dist AS (
+                        SELECT
+                            rs.route_id     AS route_id,
+                            sum(s.distance) AS total_distance
+                        FROM route_segments rs
+                            JOIN segments s ON rs.segment_id = s.segment_id
+                        GROUP BY 1
+                    )
+                    SELECT
+                        -- s.segment_id,
+                        SUM((s.distance / td.total_distance) * t.price) AS segment_revenue
+                    FROM tickets t
+                        JOIN rides r ON t.ride_id = r.ride_id
+                        JOIN route_segments rs ON r.route_id = rs.route_id
+                        JOIN segments s ON rs.segment_id = s.segment_id
+                        JOIN t_dist td ON td.route_id = rs.route_id
+                    WHERE s.segment_id = %d
+                    GROUP BY s.segment_id;""" % segment_id
     revenue = run_query(query_string)
 
     results = {
-        'segment_id': segment_id, 'revenue': float(revenue)
+        'segment_id': segment_id, 'revenue': round(float(revenue), 2)
     }
 
     return jsonify(results)
